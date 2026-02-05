@@ -1,0 +1,21 @@
+# MadGraph5 installation (large, install separately)
+MG5_aMC_v3_7_0/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Auto-generated MadGraph parser tables
+py.py
+
+# Runtime directories
+output/
+workspace/
+
+# macOS
+.DS_Store
+
+# Claude Code local settings and memory (user-specific)
+.claude/settings.local.json
+.claude/projects/
