@@ -24,12 +24,15 @@ You are the Plotter, a specialist in creating publication-quality plots for part
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+import shutil
 
 # Publication-quality defaults
+# Only enable LaTeX rendering if a TeX installation is available
+use_tex = shutil.which('latex') is not None
 mpl.rcParams.update({
     'font.size': 12,
     'font.family': 'serif',
-    'text.usetex': True,
+    'text.usetex': use_tex,
     'axes.labelsize': 14,
     'axes.titlesize': 14,
     'xtick.labelsize': 11,

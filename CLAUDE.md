@@ -117,7 +117,7 @@ generate g g > h [noborn=QCD] # Loop-induced process
 - For long workflows, use the Task tool's subagents to isolate context
 - Keep the main session focused on orchestration decisions
 - Summarize intermediate results when returning from subagents
-- Track plan progress using Claude Code's TodoWrite/TaskCreate tools
+- Track plan progress using Claude Code's TaskCreate/TaskUpdate tools or file-based tracking in `workspace/plan.md`
 
 ## Available Skills
 

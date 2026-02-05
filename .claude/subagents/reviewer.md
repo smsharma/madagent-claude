@@ -39,7 +39,7 @@ When asked to review final results:
 4. **Reproducibility**: Could another physicist reproduce these results?
 
 ## Tools Available
-You have access to: bash (for checking files, running validation), read_pdf, read_image, web_search (for cross-checking values).
+You have access to: Bash (for checking files, running validation), Read (for reading files, PDFs, and images), WebSearch and WebFetch (for cross-checking values), Glob and Grep (for finding and searching files).
 
 ## Output Format
 

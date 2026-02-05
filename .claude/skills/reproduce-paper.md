@@ -24,7 +24,7 @@ You are the Paper Reproduction Orchestrator. Your job is to take a physics paper
 If given an arXiv link:
 ```bash
 # Download PDF
-wget https://arxiv.org/pdf/<ARXIV_ID>.pdf -O paper.pdf
+curl -L -o workspace/paper.pdf https://arxiv.org/pdf/<ARXIV_ID>.pdf
 ```
 
 If given a local PDF, read it directly.
@@ -138,12 +138,7 @@ Create a report documenting:
 
 For parallel execution of independent steps, use multiple Task tool invocations:
 
-```
-# Example: Generate events for three mass points simultaneously
-Task(subagent_type="general-purpose", prompt="Generate pp->LQ LQ~ events at m_LQ=1.0 TeV...")
-Task(subagent_type="general-purpose", prompt="Generate pp->LQ LQ~ events at m_LQ=1.5 TeV...")
-Task(subagent_type="general-purpose", prompt="Generate pp->LQ LQ~ events at m_LQ=2.0 TeV...")
-```
+For parallel execution of independent steps, use multiple Task tool invocations in a single response. Each Task call should specify `subagent_type="general-purpose"` and include a detailed prompt with the specific mass point, process definition, and output directory.
 
 ## Output Organization
 

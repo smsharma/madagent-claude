@@ -6,22 +6,25 @@ This document provides comprehensive instructions for working with MadGraph5_aMC
 
 ### Launching MadGraph
 
-**Interactive mode** (preferred for agent workflows):
+**Script mode** (preferred for agent workflows):
 ```bash
-<MadGraph_Path>/bin/mg5_aMC
+source .venv/bin/activate && python3 MG5_aMC_v3_7_0/bin/mg5_aMC script.mg5
 ```
-This opens the MadGraph interactive prompt where you enter commands sequentially.
+Where `script.mg5` contains MadGraph commands, one per line. This is the preferred mode because Claude Code's Bash tool runs non-interactive subprocesses.
 
-**Script mode** (for batch processing):
+**Interactive mode** (for manual exploration only):
 ```bash
-<MadGraph_Path>/bin/mg5_aMC script.mg5
+source .venv/bin/activate && python3 MG5_aMC_v3_7_0/bin/mg5_aMC
 ```
-Where `script.mg5` contains MadGraph commands, one per line.
+This opens the MadGraph interactive prompt. Not recommended for automated agent workflows since the Bash tool cannot maintain a persistent interactive session.
 
-### Key Paths
-- MadGraph installation: typically `/opt/MG5_aMC` or `$HOME/MG5_aMC`
-- Python environment: `/opt/envs/MAD` (container) or system Python
-- Output directory: `/output` (container) or `./output`
+### Local Paths
+- MadGraph installation: `MG5_aMC_v3_7_0/`
+- MG5 executable: `MG5_aMC_v3_7_0/bin/mg5_aMC`
+- Python venv: `.venv/` (Python 3.12 via uv, activate before running MG5)
+- Output directory: `output/`
+- Working directory: `workspace/`
+- Models directory: `MG5_aMC_v3_7_0/models/` (sm, loop_sm, MSSM_SLHA2, hgg_plugin)
 
 ## 2. Model Management
 

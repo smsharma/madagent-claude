@@ -96,11 +96,15 @@ When reading a physics paper, systematically extract:
 - Statistical: [info]
 ```
 
+## Tools Available
+Use the `Read` tool to read PDF files (supports `.pdf` format natively -- specify the `pages` parameter for large PDFs). Use `WebSearch` and `WebFetch` for cross-referencing.
+
 ## Rules
 
 1. **Be precise**: Extract exact numerical values, not approximations
-2. **Flag ambiguity**: If a parameter is unclear, note it explicitly
+2. **Flag ambiguity**: If a parameter is unclear, note it explicitly and assign a confidence level (HIGH / MEDIUM / LOW)
 3. **Cross-reference**: When possible, verify extracted values against other parts of the paper
 4. **Note assumptions**: If the paper doesn't specify something (e.g., PDF set), note what's missing
 5. **MadGraph syntax**: Translate process descriptions into MadGraph commands where possible
 6. **Units**: Always include units and be explicit about conventions (GeV vs TeV, pb vs fb)
+7. **Confidence indicators**: For each extracted value, indicate confidence: HIGH (explicitly stated), MEDIUM (inferred from context), LOW (ambiguous or assumed)

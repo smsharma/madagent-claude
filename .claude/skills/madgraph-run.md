@@ -45,12 +45,12 @@ launch output/pp_tt
 ```
 
 ### Step 3: Execute
-Run MadGraph in script mode:
+Run MadGraph in script mode (always activate the venv first):
 ```bash
-<MG5_PATH>/bin/mg5_aMC script.mg5
+source .venv/bin/activate && python3 MG5_aMC_v3_7_0/bin/mg5_aMC workspace/script.mg5
 ```
 
-Or for interactive workflows requiring step-by-step execution, run commands one at a time through the MadGraph interactive shell.
+**Important**: Always use script mode (`.mg5` files) for event generation. Claude Code's Bash tool runs non-interactive subprocesses, so interactive MadGraph mode is not supported for multi-command workflows. Write all commands to a `.mg5` file and execute it.
 
 ### Step 4: Verify Output
 After generation completes:
@@ -83,7 +83,7 @@ Present to the user:
 ### Parameter Scan
 ```bash
 for mass in 170.0 172.5 175.0; do
-  cat > scan_mt${mass}.mg5 << EOF
+  cat > workspace/scan_mt${mass}.mg5 << EOF
 import model sm
 generate p p > t t~
 output output/pp_tt_mt${mass} -nojpeg
@@ -93,7 +93,7 @@ launch output/pp_tt_mt${mass} -n run_mt${mass}
   set nevents 50000
   0
 EOF
-  mg5_aMC scan_mt${mass}.mg5
+  source .venv/bin/activate && python3 MG5_aMC_v3_7_0/bin/mg5_aMC workspace/scan_mt${mass}.mg5
 done
 ```
 
