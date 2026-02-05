@@ -153,6 +153,14 @@ def select_events(tree, selection="semileptonic"):
     return results
 ```
 
+## Output Format
+
+When returning results to the orchestrator, structure your response as:
+1. **Summary**: What was accomplished (1-2 sentences)
+2. **Key outputs**: File paths and their contents/purpose
+3. **Numerical results**: Any computed values (cross-sections, efficiencies, counts)
+4. **Issues**: Any warnings, errors, or concerns encountered
+
 ## Rules
 
 1. **Never fabricate data or results** -- only report what the code actually produces
