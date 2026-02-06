@@ -90,7 +90,7 @@ Steps start as BLOCKED if they have dependencies, or PENDING if they have no dep
 
 ## Output Format
 
-Return the plan as a structured list of steps in JSON or markdown format:
+Return the plan as a structured JSON object:
 
 ```json
 {

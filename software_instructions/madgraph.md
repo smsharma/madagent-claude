@@ -32,8 +32,9 @@ This opens the MadGraph interactive prompt. Not recommended for automated agent 
 ```
 import model sm              # Standard Model (default)
 import model sm-no_b_mass    # SM with massless b-quarks
-import model heft            # Higgs Effective Field Theory
-import model mssm            # Minimal Supersymmetric SM
+import model heft            # Higgs Effective Field Theory (ggH coupling)
+import model loop_sm         # SM with loop particles (for NLO loop-induced)
+import model MSSM_SLHA2      # Minimal Supersymmetric SM (locally installed name)
 import model <MODEL_NAME>    # Any installed/downloadable model
 ```
 
@@ -53,6 +54,16 @@ display diagrams             # Show Feynman diagrams for current process
 - `l-` = {e-, mu-, ta-}
 - `vl` = {ve, vm, vt}
 - `vl~` = {ve~, vm~, vt~}
+
+### Model Restrictions
+Restriction files simplify models by setting certain parameters to zero or specific values. Use with a hyphen after the model name:
+```
+import model sm-no_b_mass      # Massless b-quark
+import model sm-lepton_masses  # Include lepton masses (normally zero)
+import model sm-ckm            # Include CKM mixing
+import model sm-no_masses      # All fermions massless
+```
+Available restrictions can be found as `restrict_<NAME>.dat` files in the model directory (`MG5_aMC_v3_7_0/models/sm/`).
 
 ### Defining Custom Multiparticle Labels
 ```
@@ -115,13 +126,22 @@ Specify NLO contributions using bracket notation:
 generate p p > t t~ [QCD]           # NLO QCD corrections to ttbar
 generate p p > w+ [QCD]             # NLO QCD to W production
 generate p p > e+ ve [QED]          # NLO EW corrections
-generate p p > t t~ [QCD] [QED]     # Mixed NLO
+generate p p > t t~ [QCD QED]       # Mixed NLO QCD+EW (requires loop_qcd_qed_sm model)
 ```
 
 **Loop-induced processes:**
 ```
+# Option 1: Full loop calculation (requires loop_sm model)
+import model loop_sm
 generate g g > h [noborn=QCD]       # gg->H (loop-induced, no Born)
-generate g g > h h [virt=QCD]       # Virtual corrections only
+
+# Option 2: Effective theory (simpler, LO only)
+import model heft
+generate g g > h                    # gg->H via effective ggH coupling
+
+# Di-Higgs (loop-induced)
+import model loop_sm
+generate g g > h h [noborn=QCD]     # gg->HH
 ```
 
 **Important NLO notes:**
@@ -207,12 +227,37 @@ Edit the card files directly before launching, or specify paths:
 0   # Accept all current settings and start generation
 ```
 
+### Launch Sequence (Critical for Script Mode)
+
+After `launch <PROC_DIR>`, MadGraph enters an interactive menu. In script mode, responses must be provided in order:
+
+1. **Switch toggles** (optional): `shower = ON/OFF`, `detector = ON/OFF`, `madspin = ON/OFF`
+2. **`set` commands** (optional): `set <parameter> <value>` for card edits
+3. **`0` or `done`**: This MUST be the final line to start event generation
+
+**CRITICAL**: Forgetting the final `0` will cause MadGraph to wait indefinitely for input, hanging the agent. Every `launch` block in a script MUST end with `0`.
+
+**Example complete script:**
+```
+import model sm
+generate p p > t t~
+output output/pp_tt -nojpeg
+launch output/pp_tt
+  shower = OFF
+  detector = OFF
+  set nevents 10000
+  set ebeam1 6500
+  set ebeam2 6500
+  set iseed 1234
+  0
+```
+
 ### Key run_card.dat Parameters
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
 | `nevents` | Number of events to generate | 10000-1000000 |
-| `ebeam1`, `ebeam2` | Beam energies (GeV) | 6500 (13 TeV LHC) |
+| `ebeam1`, `ebeam2` | Beam energies (GeV) | 6500 (13 TeV Run 2) or 6800 (13.6 TeV Run 3) |
 | `pdlabel` | PDF set type | `lhapdf` or `nn23lo1` |
 | `lhaid` | LHAPDF grid ID | 303400 (NNPDF3.1) |
 | `iseed` | Random seed | 0 (auto) |
@@ -338,17 +383,18 @@ decay t~ > w- b~, w- > l- vl~
 | W+jets | `generate p p > w+ j, w+ > l+ vl` |
 | Z+jets | `generate p p > z j, z > l+ l-` |
 | Top pair | `generate p p > t t~` |
-| Single top (t-channel) | `generate p p > t j $$ w+ w-` |
+| Single top (t-channel) | `generate p p > t j QCD=0` (pure EW = t-channel) |
 | WW production | `generate p p > w+ w-` |
 | ZZ production | `generate p p > z z` |
-| Higgs (ggF) | `generate g g > h [noborn=QCD]` |
+| Higgs (ggF, loop) | `generate g g > h [noborn=QCD]` (after `import model loop_sm`) |
+| Higgs (ggF, HEFT) | `generate g g > h` (after `import model heft`) |
 | Higgs (VBF) | `generate p p > h j j QCD=0` |
 | ttH | `generate p p > t t~ h` |
 
 ### BSM Examples
 | Process | MadGraph Command |
 |---------|-----------------|
-| SUSY squark pair | `generate p p > go go` (after `import model mssm`) |
+| SUSY gluino pair | `generate p p > go go` (after `import model MSSM_SLHA2`) |
 | EFT (dim-6) | `generate p p > t t~ NP=1` (after `import model SMEFTsim_...`) |
 | Extra Higgs | `generate p p > h2` (after importing appropriate model) |
 | Leptoquark pair | `generate p p > lq lq~` (after importing LQ model) |
@@ -394,11 +440,53 @@ generate p p > t t~   # Then use MadSpin for decays
 
 ### Process Exclusion
 ```
-generate p p > e+ e- / a        # Exclude photon-mediated
-generate p p > t j $$ w+ w-     # Exclude W from s-channel
+generate p p > e+ e- / a        # Exclude photon from s-channel
+generate p p > t t~ / h         # Exclude Higgs from s-channel
 ```
 - `/` excludes particle from s-channel propagators
 - `$$` excludes particle from both s- and t-channel
+- **Caution with `$$`**: `p p > t j $$ w+ w-` removes W from ALL propagators, which kills the t-channel single-top signal (since it proceeds via t-channel W). Use coupling constraints (`QCD=0`) instead for isolating specific topologies.
+
+### Reweighting
+
+MadGraph can reweight existing events to new parameter points without regenerating:
+```
+# From within MG5 interactive session, after generating events:
+# Or in a script, use the madevent interface:
+launch output/pp_tt --reweight
+  change parameter set mt 175.0
+  change parameter set wt auto
+  0
+```
+This adds new weights to existing LHE files, enabling efficient parameter scans.
+
+### Parameter Scanning
+
+MadGraph supports automatic parameter scanning using special syntax in the `set` command:
+```
+launch output/pp_tt
+  set mt scan:[170.0, 172.5, 175.0]    # Scan over top mass values
+  set wt auto
+  set nevents 10000
+  0
+```
+MadGraph will automatically run separate generations for each parameter point.
+
+### Gridpack Generation
+
+Gridpacks pre-compute integration grids for fast, reproducible event generation:
+```
+launch output/pp_tt
+  set gridpack True
+  set nevents 10000
+  0
+```
+This produces `output/pp_tt/run_01_gridpack.tar.gz`. To use later:
+```bash
+tar xzf run_01_gridpack.tar.gz
+cd madevent
+./bin/gridrun 10000 12345    # nevents seed
+```
 
 ### Merging and Matching
 For combining different jet multiplicities (MLM matching):
@@ -413,7 +501,75 @@ set ickkw 1                    # Enable MLM matching
 set xqcut 20                   # Matching scale
 ```
 
-## 11. Troubleshooting
+### FxFx Merging (NLO Jet Merging)
+
+For NLO multi-jet merging, use FxFx instead of MLM:
+```
+generate p p > z [QCD]
+add process p p > z j [QCD]
+output output/pp_z_01j_nlo -nojpeg
+
+launch output/pp_z_01j_nlo
+  shower = ON
+  set Qcut 30         # FxFx merging scale (in shower_card)
+  set njmax 1          # Maximum jet multiplicity
+  0
+```
+
+Key differences from MLM:
+- FxFx works at NLO, MLM at LO
+- FxFx uses `Qcut` in the shower_card (not `xqcut` in run_card)
+- FxFx uses `ickkw = 3` (set automatically for NLO processes)
+
+### Process Validation
+```
+check gauge p p > t t~     # Verify gauge invariance
+check lorentz p p > t t~   # Verify Lorentz invariance
+```
+
+### Computing Decay Widths
+```
+compute_widths t --body_decay=2    # Compute top width (2-body decays)
+compute_widths all --precision=0.01  # All unstable particles
+```
+
+## 11. Common Pitfalls
+
+### 1. Forgetting `0` after `set` commands in launch
+Every `launch` block MUST end with `0` (or `done`). Without it, MadGraph will hang or misinterpret subsequent commands.
+
+### 2. Coupling order ambiguity
+`generate p p > e+ e- j` generates diagrams at the lowest COMBINED order. This may include both QCD and EW contributions. To select only the QCD contribution: `generate p p > e+ e- j QCD=1 QED=2`.
+
+### 3. Width consistency
+After changing a particle mass, you MUST recompute the width:
+```
+set mt 175.0
+set wt auto     # CRITICAL: recompute top width for new mass
+```
+
+### 4. PDF set not found
+If `pdlabel = lhapdf` is set but LHAPDF is not installed, generation fails. The safe default is `pdlabel = nn23lo1` (built-in PDF, no external dependency).
+
+### 5. 4-flavor vs 5-flavor scheme
+In MG5 v3.x, check the proton definition with `display multiparticles`. For processes sensitive to b-quark PDFs (single top, bbH), verify whether `p` includes b-quarks or explicitly redefine: `define p = g u d s c u~ d~ s~ c~` for 4-flavor.
+
+### 6. Output directory already exists
+`output pp_tt` will fail if the directory exists. Use `output pp_tt -f` to force overwrite, or choose a unique name per run.
+
+### 7. NLO requires loop model
+NLO processes like `generate p p > t t~ [QCD]` require the loop model. MG5 automatically switches to `loop_sm` for SM NLO, but for BSM models you must import a loop-capable model explicitly.
+
+### 8. Use `-nojpeg` on headless systems
+On systems without LaTeX or graphical tools, use `output <dir> -nojpeg` to skip diagram rendering.
+
+### 9. Process generation slow for many particles
+Each additional final-state particle increases generation time dramatically. For >4 final-state particles, consider using decay chains or MadSpin instead of direct generation.
+
+### 10. Agent-specific: MadGraph hangs waiting for input
+In script mode, every `launch` must end with `0`. Without it, MadGraph silently consumes the next command line as a menu response, causing subtle downstream failures.
+
+## 12. Troubleshooting
 
 ### Common Issues
 | Issue | Solution |
@@ -424,6 +580,12 @@ set xqcut 20                   # Matching scale
 | Slow generation | Reduce phase space cuts, increase max diagram count |
 | Memory issues | Reduce number of subprocesses, split into jobs |
 | PDF not found | Install via `lhapdf install NNPDF31_lo_as_0130` |
+| MadGraph hangs waiting for input | Always end card editing with `0` in script mode |
+| Process directory already exists | Use `-f` flag or choose a new name |
+| "ImportError: No module named six" | Activate venv: `source .venv/bin/activate` |
+| Cannot find model | Check `MG5_aMC_v3_7_0/models/`; names are case-sensitive |
+| "Encountered NaN" during integration | Loosen generation cuts (increase ptj, reduce etal) |
+| LHE file is empty / 0 events | Cross section is zero; check process definition and cuts |
 
 ### Useful Commands
 ```
@@ -433,7 +595,7 @@ history                        # Show command history
 help <command>                 # Get help on specific command
 ```
 
-## 12. Output Inspection
+## 13. Output Inspection
 
 ### Cross-section Results
 After generation, MadGraph prints:
